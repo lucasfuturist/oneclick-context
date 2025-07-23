@@ -1,41 +1,30 @@
-# src/oneclick_context/cli.py
-from pathlib import Path
-import sys
+﻿from pathlib import Path
 import typer
+from .core import build_tree
+from .exporters import text, markdown, json as jsonexp, html
 
-from .tree import list_tree        # your existing function
-from .render_md import render_md   # we'll create right below
+app = typer.Typer(add_completion=False)
 
-app = typer.Typer(
-    add_completion=False,
-    help="One-Click Context Toolkit – visual file trees & summaries",
-)
+FMT_MAP = {
+    "text": lambda t, p: "\n".join(text.render(t)),
+    "md": markdown.render_md,
+    "json": lambda t, p: jsonexp.render_json(t),
+    "html": lambda t, p: html.render_html(t),
+}
 
 @app.command()
 def main(
     path: Path = typer.Argument(".", help="Folder to scan"),
-    depth: int = typer.Option(2, "--depth", "-d", help="Max folder depth"),
-    fmt: str = typer.Option(
-        "text", "--fmt", "-f", help="Output format: text | md"
-    ),
+    depth: int = typer.Option(3, "--depth", "-d"),
+    fmt: str = typer.Option("text", "--fmt", "-f", help="text|md|json|html"),
 ):
-    """Generate a file-tree context digest."""
-    # Safety: ensure path exists
-    if not path.exists():
-        typer.secho(f"[error] Path not found: {path}", fg=typer.colors.RED, err=True)
+    tree_obj = build_tree(path, max_depth=depth)
+    try:
+        output = FMT_MAP[fmt](tree_obj, path)
+    except KeyError:
+        typer.echo(f"Unknown format '{fmt}'", err=True)
         raise typer.Exit(1)
-
-    # Build the raw tree string with your current function
-    tree_str = list_tree(str(path), depth=depth, return_str=True)
-
-    # Decide how to output
-    if fmt == "text":
-        typer.echo(tree_str)
-    elif fmt == "md":
-        typer.echo(render_md(tree_str, path))
-    else:
-        typer.secho(f"Unknown --fmt '{fmt}'", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1)
+    typer.echo(output)
 
 if __name__ == "__main__":
     app()
