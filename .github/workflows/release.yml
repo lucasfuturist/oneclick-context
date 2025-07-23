@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      run: |
+        pip install poetry
+        poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+        poetry config virtualenvs.create false
+
+    - name: Build & publish
+      run: |
+        poetry install --no-interaction --no-root
+        poetry build
+        poetry publish --no-interaction --skip-existing
