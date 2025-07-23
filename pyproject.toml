@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "oneclick-context"
+version = "0.1.1"
+description = "One-Click Context Toolkit - visual file trees + AI summaries"
+authors = ["frost <lucasthelearner@gmail.com>"]
+readme = "README.md"
+
+# src-layout: tell Poetry where the actual package lives
+packages = [{ include = "oneclick_context", from = "src" }]
+
+# Runtime deps (will get auto-updated the first time you `poetry add …`)
+[tool.poetry.dependencies]
+python = "^3.10"             # replace with whatever you actually run, e.g. ^3.11
+typer = "^0.12.3"
+rich = "^13.7"
+anytree = "^2.12"
+
+# Dev-only deps
+[tool.poetry.group.dev.dependencies]
+black = "^24.2"
+ruff  = "^0.4.5"
+pytest = "^8.2"
+
+# Console entry: this creates the global `oneclick` command
+[tool.poetry.scripts]
+oneclick = "oneclick_context.cli:app"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
