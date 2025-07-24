@@ -8,6 +8,37 @@ from .prompts import ask_generation_params
 from .renderer import generate_and_output
 from .utils import sanitize_path
 
+QUICK_REF = r"""
+┌─ One-Click Context Toolkit ─────────────────────────────────────────┐
+| Generate a project tree (and optionally inline script source).     |
+|                                                                    |
+|  Basic                                                             |
+|  -----                                                             |
+|  oneclick <folder>               # print text tree of <folder>     |
+|  oneclick -f md                  # markdown output                 |
+|  oneclick -f json                # JSON (for tooling)              |
+|  oneclick -f html                # self-contained HTML             |
+|                                                                    |
+|  Common flags                                                      |
+|  ------------                                                      |
+|  -d, --depth N              descend N levels   (default 3)         |
+|  -s, --suppress DIR [...]    skip dirs (repeatable)                |
+|  -l, --list-scripts EXT [...] inline source for *.EXT files        |
+|  -o, --output FILE           write to FILE instead of stdout       |
+|                                                                    |
+|  Interactive helpers                                               |
+|  --------------------                                              |
+|  -g, --guide              step-by-step wizard (single run)         |
+|  -m, --menu               stay in a menu session (can run many)    |
+|                                                                    |
+|  Examples                                                          |
+|  --------                                                          |
+|  oneclick src -d 2 -f md                                           |
+|  oneclick ./project -f json -s node_modules -s dist               |
+|  oneclick . -l .py -l .ts -o tree.txt                              |
+└────────────────────────────────────────────────────────────────────┘
+"""
+
 app = typer.Typer(add_completion=False, help="One-Click Context Toolkit")
 
 # ── COMMAND ───────────────────────────────────────────────────────────
@@ -79,3 +110,9 @@ def main(
 
 if __name__ == "__main__":
     app()
+
+@app.command("help")
+def _print_help():
+    """Display quick reference cheat-sheet."""
+    import typer  # local import to avoid cycles
+    typer.echo(QUICK_REF)
