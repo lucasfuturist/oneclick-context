@@ -7,6 +7,11 @@ import inspect, click
 
 from .core import build_tree
 from .exporters import text, markdown, json as jsonexp, html
+def _abort_if_none(val):
+    """Exit the CLI cleanly if questionary returns None (Esc / Ctrl-C)."""
+    if val is None:
+        raise typer.Exit()
+    return val
 
 # ── Typer setup ───────────────────────────────────────────────────────────────
 app = typer.Typer(add_completion=False, help="One-Click Context Toolkit")
@@ -41,10 +46,9 @@ def ask_generation_params(
     default_fmt: str,
 ) -> dict:
     """Prompt the classic wizard questions and return a kwargs dict."""
-    raw = q.text("🔹 Folder to scan", default=str(default_path)).ask()
-    scan_path = sanitize_path(raw)
+    raw = _abort_if_none(q.text("🔹 Folder to scan", default=str(default_path)).ask())`n    scan_path = sanitize_path(raw)
 
-    depth = int(q.text("🔹 Max depth", default=str(default_depth)).ask())
+    depth_raw = _abort_if_none(q.text("🔹 Max depth", default=str(default_depth)).ask())\n    depth = int(depth_raw)).ask())
 
     suppress: list[str] = []
     if q.confirm("🔹 Skip common library folders?", default=True).ask():
@@ -195,5 +199,6 @@ def main(
 
 if __name__ == "__main__":
     app()
+
 
 
