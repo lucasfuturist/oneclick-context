@@ -41,7 +41,7 @@ QUICK_REF = r"""
 """
 
 # ── Typer app ----------------------------------------------------------
-app = typer.Typer(add_completion=False, help="One-Click Context Toolkit")
+app = typer.Typer(add_completion=False, help="One-Click Context Toolkit", add_help_option=False)
 
 # ── main command -------------------------------------------------------
 @app.command()
