@@ -128,12 +128,26 @@ def main(
                     "Exit",
                 ],
             ).ask()
-
             if choice.startswith("Set save"):
-                raw = q.path("💾  Folder for saved trees (leave blank to disable)").ask()
-                save_dir = sanitize_path(raw) if raw else None
+                prompt = "💾  Folder for saved trees (Enter = keep; off = disable)"
+                default_val = str(save_dir) if save_dir else ""
+                raw = q.path(prompt, default=default_val).ask()
+
+                # ── interpret response ─────────────────────────────────────
+                if raw is None:          # Esc/Ctrl-C → skip
+                    continue
+                raw = raw.strip()
+                if raw.lower() in {"off", "disable", "none"}:
+                    save_dir = None
+                elif raw == "":          # Enter → keep existing
+                    pass
+                else:
+                    save_dir = sanitize_path(raw)
+
                 typer.secho(
-                    f"✔ Save location set to: {save_dir}" if save_dir else "✖ Auto-save disabled",
+                    f"✔ Save location set to: {save_dir}"
+                    if save_dir
+                    else "✖ Auto-save disabled",
                     fg=typer.colors.GREEN,
                 )
             elif choice == "Generate tree":
@@ -172,3 +186,4 @@ def main(
 
 if __name__ == "__main__":
     app()
+
