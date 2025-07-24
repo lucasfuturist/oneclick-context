@@ -136,28 +136,29 @@ def _list_scripts(
     """
     Recursively list every file whose suffix == *extension*.
     With --out, writes a single file containing the full source of
-    every match, separated by Markdown-like headers.
+    every match, separated by Markdown-style headers.
     """
     ext = extension if extension.startswith(".") else f".{extension}"
     suppress_lc = {s.lower() for s in suppress}
 
-    matches: list[Path] = []
-    for p in folder.rglob(f"*{ext}"):
-        if p.is_file() and all(part.lower() not in suppress_lc for part in p.parts):
-            matches.append(p)
+    matches: list[Path] = [
+        p for p in folder.rglob(f"*{ext}")
+        if p.is_file() and all(part.lower() not in suppress_lc for part in p.parts)
+    ]
 
     if out_file:
         out_file.parent.mkdir(parents=True, exist_ok=True)
         with out_file.open("w", encoding="utf-8") as fh:
             for idx, p in enumerate(matches, 1):
                 try:
-                rel = p.relative_to(folder.resolve())
-            except ValueError:
-                rel = p
+                    rel = p.relative_to(folder.resolve())
+                except ValueError:
+                    rel = p
                 header = f"\\n\\n### {idx}. `{rel}`\\n---\\n"
                 fh.write(header)
                 fh.write(p.read_text(encoding="utf-8", errors="replace"))
-        typer.secho(f"📄 Wrote {len(matches)} files → {out_file}", fg=typer.colors.GREEN)
+        typer.secho(f"📄 Wrote {len(matches)} files → {out_file}",
+                    fg=typer.colors.GREEN)
     else:
         base = folder.resolve()
         for p in matches:
@@ -165,23 +166,9 @@ def _list_scripts(
                 typer.echo(p.relative_to(base))
             except ValueError:
                 typer.echo(p)
-    """
-    Recursively list every file whose suffix == *extension*.
-    Respects --suppress just like tree generation.
-    """
-    ext = extension if extension.startswith(".") else f".{extension}"
-    suppress_lc = {s.lower() for s in suppress}
-    for p in folder.rglob(f"*{ext}"):
-        if p.is_file() and all(part.lower() not in suppress_lc for part in p.parts):
-            try:
-                base = folder.resolve()
-                typer.echo(p.relative_to(base))
-            except ValueError:
-                typer.echo(p)
-
-# â”€â”€ run via `python -m` â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-if __name__ == "__main__":
+\nif __name__ == "__main__":
     app()
+
 
 
 
