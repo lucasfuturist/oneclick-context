@@ -8,9 +8,9 @@ from .prompts import ask_generation_params
 from .renderer import generate_and_output
 from .utils import sanitize_path
 
-# ── Cheat-sheet shown by oneclick help / --help ─────────────────────
+# â”€â”€ Cheat-sheet shown by oneclick help / --help â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 QUICK_REF = r"""
-┌─ One-Click Context Toolkit ─────────────────────────────────────────┐
+â”Œâ”€ One-Click Context Toolkit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 | Generate a project tree (and optionally inline script source).     |
 |                                                                    |
 |  BASIC                                                             |
@@ -37,15 +37,15 @@ QUICK_REF = r"""
 |  oneclick src -d 2 -f md                                           |
 |  oneclick . -f json -s node_modules -s dist                        |
 |  oneclick . -l .py -l .ts -o tree.txt                              |
-└────────────────────────────────────────────────────────────────────┘
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 """
 
-# ── Typer app (with default --help disabled) ───────────────────────
+# â”€â”€ Typer app (with default --help disabled) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app = typer.Typer(add_completion=False,
                   add_help_option=False,
                   help="One-Click Context Toolkit")
 
-# ── main / default command ─────────────────────────────────────────
+# â”€â”€ main / default command â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.command()
 def main(
     path: Path = typer.Argument(".", help="Folder to scan"),
@@ -63,12 +63,12 @@ def main(
         typer.echo(QUICK_REF)
         raise typer.Exit()
 
-    # ── Menu session ───────────────────────────────────────────────
+    # â”€â”€ Menu session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if menu:
         save_dir: Optional[Path] = Path.cwd().parent.resolve()
         while True:
             choice = q.select(
-                "📜  Main menu",
+                "ðŸ“œ  Main menu",
                 choices=[
                     f"Set save location (currently: {save_dir if save_dir else 'OFF'})",
                     "Generate tree",
@@ -77,7 +77,7 @@ def main(
             ).ask()
 
             if choice.startswith("Set save"):
-                prompt = "💾  Folder for saved trees (Enter = keep; off = disable)"
+                prompt = "ðŸ’¾  Folder for saved trees (Enter = keep; off = disable)"
                 raw = q.path(prompt, default=str(save_dir) if save_dir else "").ask()
                 if raw is None:
                     continue
@@ -87,8 +87,8 @@ def main(
                 elif raw:
                     save_dir = sanitize_path(raw)
                 typer.secho(
-                    f"✔ Save location set to: {save_dir}"
-                    if save_dir else "✖ Auto-save disabled",
+                    f"âœ” Save location set to: {save_dir}"
+                    if save_dir else "âœ– Auto-save disabled",
                     fg=typer.colors.GREEN,
                 )
 
@@ -98,15 +98,15 @@ def main(
             else:
                 raise typer.Exit()
 
-    # ── Guide (one-shot wizard) ────────────────────────────────────
+    # â”€â”€ Guide (one-shot wizard) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if guide:
         params = ask_generation_params(path, depth, fmt)
-        out_raw = q.text("💾  File name (blank = stdout)", default="").ask()
+        out_raw = q.text("ðŸ’¾  File name (blank = stdout)", default="").ask()
         save_dir = Path(out_raw).parent if out_raw else None
         generate_and_output(params=params, save_dir=save_dir)
         raise typer.Exit()
 
-    # ── Flag mode (no interaction) ─────────────────────────────────
+    # â”€â”€ Flag mode (no interaction) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     generate_and_output(
         params=dict(
             path=path,
@@ -118,20 +118,50 @@ def main(
         save_dir=None,
     )
 
-# ── quick-reference sub-command ────────────────────────────────────
+# â”€â”€ quick-reference sub-command â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.command("help")
 def _print_help():
     """Display quick reference cheat-sheet."""
     typer.echo(QUICK_REF)
 
-# ── scripts sub-command ────────────────────────────────────────────
-@app.command("scripts")
+# â”€â”€ scripts sub-command â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€@app.command("scripts")
 def _list_scripts(
     extension: str = typer.Argument(..., help="Extension like .py"),
     folder: Path  = typer.Argument(".", help="Folder to scan"),
     suppress: List[str] = typer.Option([], "--suppress", "-s",
         help="Folders to skip (repeatable)"),
+    out_file: Optional[Path] = typer.Option(None, "--out", "-o",
+        help="Concatenate full source of every match into this file"),
 ):
+    """
+    Recursively list every file whose suffix == *extension*.
+    With --out, writes a single file containing the full source of
+    every match, separated by Markdown-like headers.
+    """
+    ext = extension if extension.startswith(".") else f".{extension}"
+    suppress_lc = {s.lower() for s in suppress}
+
+    matches: list[Path] = []
+    for p in folder.rglob(f"*{ext}"):
+        if p.is_file() and all(part.lower() not in suppress_lc for part in p.parts):
+            matches.append(p)
+
+    if out_file:
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        with out_file.open("w", encoding="utf-8") as fh:
+            for idx, p in enumerate(matches, 1):
+                rel = p.relative_to(folder.resolve())
+                header = f"\\n\\n### {idx}. `{rel}`\\n---\\n"
+                fh.write(header)
+                fh.write(p.read_text(encoding="utf-8", errors="replace"))
+        typer.secho(f"📄 Wrote {len(matches)} files → {out_file}", fg=typer.colors.GREEN)
+    else:
+        base = folder.resolve()
+        for p in matches:
+            try:
+                typer.echo(p.relative_to(base))
+            except ValueError:
+                typer.echo(p)
     """
     Recursively list every file whose suffix == *extension*.
     Respects --suppress just like tree generation.
@@ -140,8 +170,14 @@ def _list_scripts(
     suppress_lc = {s.lower() for s in suppress}
     for p in folder.rglob(f"*{ext}"):
         if p.is_file() and all(part.lower() not in suppress_lc for part in p.parts):
-            typer.echo(p.relative_to(Path.cwd()))
+            try:
+                base = folder.resolve()
+                typer.echo(p.relative_to(base))
+            except ValueError:
+                typer.echo(p)
 
-# ── run via `python -m` ────────────────────────────────────────────
+# â”€â”€ run via `python -m` â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if __name__ == "__main__":
     app()
+
+
