@@ -8,40 +8,42 @@ from .prompts import ask_generation_params
 from .renderer import generate_and_output
 from .utils import sanitize_path
 
+# ── Quick reference ----------------------------------------------------
 QUICK_REF = r"""
 ┌─ One-Click Context Toolkit ─────────────────────────────────────────┐
 | Generate a project tree (and optionally inline script source).     |
 |                                                                    |
-|  Basic                                                             |
+|  BASIC                                                             |
 |  -----                                                             |
-|  oneclick <folder>               # print text tree of <folder>     |
-|  oneclick -f md                  # markdown output                 |
+|  oneclick <folder>               # text tree of <folder>           |
+|  oneclick -f md                  # Markdown output                 |
 |  oneclick -f json                # JSON (for tooling)              |
-|  oneclick -f html                # self-contained HTML             |
+|  oneclick -f html               # self-contained HTML              |
 |                                                                    |
-|  Common flags                                                      |
-|  ------------                                                      |
-|  -d, --depth N              descend N levels   (default 3)         |
+|  COMMON FLAGS                                                       |
+|  ------------                                                       |
+|  -d, --depth N              descend N levels  (default 3)          |
 |  -s, --suppress DIR [...]    skip dirs (repeatable)                |
 |  -l, --list-scripts EXT [...] inline source for *.EXT files        |
-|  -o, --output FILE           write to FILE instead of stdout       |
+|  -o, --output FILE          write result to FILE instead of stdout |
 |                                                                    |
-|  Interactive helpers                                               |
-|  --------------------                                              |
+|  INTERACTIVE MODES                                                  |
+|  -----------------                                                  |
 |  -g, --guide              step-by-step wizard (single run)         |
-|  -m, --menu               stay in a menu session (can run many)    |
+|  -m, --menu               stay in menu session (generate many)     |
 |                                                                    |
-|  Examples                                                          |
-|  --------                                                          |
+|  EXAMPLES                                                           |
+|  --------                                                           |
 |  oneclick src -d 2 -f md                                           |
-|  oneclick ./project -f json -s node_modules -s dist               |
+|  oneclick . -f json -s node_modules -s dist                        |
 |  oneclick . -l .py -l .ts -o tree.txt                              |
 └────────────────────────────────────────────────────────────────────┘
 """
 
+# ── Typer app ----------------------------------------------------------
 app = typer.Typer(add_completion=False, help="One-Click Context Toolkit")
 
-# ── COMMAND ───────────────────────────────────────────────────────────
+# ── main command -------------------------------------------------------
 @app.command()
 def main(
     path: Path = typer.Argument(".", help="Folder to scan"),
@@ -50,9 +52,16 @@ def main(
     suppress: List[str] = typer.Option([], "--suppress", "-s"),
     list_scripts: List[str] = typer.Option([], "--list-scripts", "-l"),
     guide: bool = typer.Option(False, "--guide", "-g", help="One-shot wizard"),
-    menu: bool = typer.Option(False, "--menu", "-m", help="Interactive menu"),
+    menu: bool  = typer.Option(False, "--menu", "-m", help="Interactive menu"),
+    help_flag: bool = typer.Option(False, "--help", "-h",
+        help="Show quick reference and exit"),
 ):
-    # ── Menu mode ─────────────────────────────────────────────────────
+    # --quick reference flag -----------------------------------------
+    if help_flag:
+        typer.echo(QUICK_REF)
+        raise typer.Exit()
+
+    # ── Menu mode ───────────────────────────────────────────────────
     if menu:
         save_dir: Optional[Path] = Path.cwd().parent.resolve()
         while True:
@@ -65,7 +74,6 @@ def main(
                 ],
             ).ask()
 
-            # ---- set save dir ----
             if choice.startswith("Set save"):
                 prompt = "💾  Folder for saved trees (Enter = keep; off = disable)"
                 raw = q.path(prompt, default=str(save_dir) if save_dir else "").ask()
@@ -74,21 +82,21 @@ def main(
                 raw = raw.strip()
                 if raw.lower() in {"off", "disable", "none"}:
                     save_dir = None
-                elif raw:  # non-empty string
+                elif raw:
                     save_dir = sanitize_path(raw)
                 typer.secho(
                     f"✔ Save location set to: {save_dir}"
                     if save_dir else "✖ Auto-save disabled",
                     fg=typer.colors.GREEN,
                 )
-            # ---- generate ----
+
             elif choice == "Generate tree":
                 params = ask_generation_params(path, depth, fmt)
                 generate_and_output(params=params, save_dir=save_dir)
             else:
                 raise typer.Exit()
 
-    # ── Guide mode ────────────────────────────────────────────────────
+    # ── Guide mode ──────────────────────────────────────────────────
     if guide:
         params = ask_generation_params(path, depth, fmt)
         out_raw = q.text("💾  File name (blank = stdout)", default="").ask()
@@ -96,7 +104,7 @@ def main(
         generate_and_output(params=params, save_dir=save_dir)
         raise typer.Exit()
 
-    # ── Flag mode ────────────────────────────────────────────────────
+    # ── Flag mode ───────────────────────────────────────────────────
     generate_and_output(
         params=dict(
             path=path,
@@ -108,11 +116,12 @@ def main(
         save_dir=None,
     )
 
-if __name__ == "__main__":
-    app()
-
+# ── sub-command: oneclick help -----------------------------------------
 @app.command("help")
 def _print_help():
     """Display quick reference cheat-sheet."""
-    import typer  # local import to avoid cycles
     typer.echo(QUICK_REF)
+
+# -----------------------------------------------------------------------
+if __name__ == "__main__":
+    app()
