@@ -23,4 +23,20 @@ def sanitize_path(raw: Optional[str]) -> Path:
         .resolve()
     )
 
+def discover_extensions(root: Path, suppress: list[str]) -> list[str]:
+    """
+    Return a sorted list of unique file suffixes ('.py', '.ts', …)
+    under *root*, skipping suppressed directories.
+    """
+    suppress_lc = {s.lower() for s in suppress}
+    exts: set[str] = set()
+    for p in root.rglob("*"):
+        if not p.is_file() or not p.suffix:
+            continue
+        if any(part.lower() in suppress_lc for part in p.parts):
+            continue
+        exts.add(p.suffix)
+    return sorted(exts, key=str.lower)
+
+
 SUPPORTS_HYPERLINK = "hyperlink" in inspect.signature(click.style).parameters
