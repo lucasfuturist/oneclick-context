@@ -150,7 +150,10 @@ def _list_scripts(
         out_file.parent.mkdir(parents=True, exist_ok=True)
         with out_file.open("w", encoding="utf-8") as fh:
             for idx, p in enumerate(matches, 1):
+                try:
                 rel = p.relative_to(folder.resolve())
+            except ValueError:
+                rel = p
                 header = f"\\n\\n### {idx}. `{rel}`\\n---\\n"
                 fh.write(header)
                 fh.write(p.read_text(encoding="utf-8", errors="replace"))
@@ -179,5 +182,6 @@ def _list_scripts(
 # â”€â”€ run via `python -m` â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if __name__ == "__main__":
     app()
+
 
 
