@@ -17,6 +17,7 @@ anytree = "^2.12"
 
 # Dev-only deps
 questionary = "^2.1.0"
+click = ">=8.1,<9"
 [tool.poetry.group.dev.dependencies]
 black = "^24.2"
 ruff  = "^0.4.5"

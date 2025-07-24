@@ -23,8 +23,17 @@ COMMON_LIBS = ["node_modules", "dist", ".venv", ".git", "__pycache__"]
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │ Helper functions                                                          │
 # ╰────────────────────────────────────────────────────────────────────────────╯
-def sanitize_path(raw: str) -> Path:
-    return Path(raw.strip().lstrip("./").strip('"')).expanduser().resolve()
+def sanitize_path(raw: Optional[str]) -> Path:     
+    """
+    Convert user input to an absolute Path.
+
+    If *raw* is None (user hit Esc / Ctrl-C) or an empty string,
+    fall back to the current working directory so the wizard
+    continues gracefully.
+    """
+    if raw is None or not str(raw).strip():
+        return Path.cwd()
+    return Path(str(raw).strip().lstrip("./").strip('"')).expanduser().resolve()
 
 def ask_generation_params(
     default_path: Path,
