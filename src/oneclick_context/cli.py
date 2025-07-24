@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import typer
 import questionary as q
+import inspect, click      
 
 from .core import build_tree
 from .exporters import text, markdown, json as jsonexp, html
@@ -92,10 +93,16 @@ def generate_and_output(
         ext = "md" if params["fmt"] == "md" else params["fmt"]
         outfile = save_dir / f"tree.{ext}"
         outfile.write_text(output, encoding="utf-8")
-        typer.secho(f"📁 Saved to: {outfile}", fg=typer.colors.GREEN, hyperlink=outfile.as_uri())
+
+        # Click 8.1 had hyperlink support, 8.2 dropped it again.
+        supports_hyperlink = "hyperlink" in inspect.signature(click.style).parameters
+        kwargs = dict(fg=typer.colors.GREEN)
+        if supports_hyperlink:
+            kwargs["hyperlink"] = outfile.as_uri()
+
+        typer.secho(f"📁 Saved to: {outfile}", **kwargs)
     else:
         typer.echo(output)
-
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │ Typer command                                                             │
 # ╰────────────────────────────────────────────────────────────────────────────╯
@@ -111,7 +118,7 @@ def main(
 ):
     # ── Menu mode ────────────────────────────────────────────────────────────
     if menu:
-        save_dir: Optional[Path] = None
+        save_dir: Optional[Path] = Path.cwd().parent.resolve()
         while True:
             choice = q.select(
                 "📜  Main menu",
