@@ -1,0 +1,80 @@
+﻿from pathlib import Path
+from typing import Optional, List
+import sys
+
+# Third-party imports
+import questionary as q
+
+# First-party imports
+from .commands.generate import generate_output
+from .utils import discover_extensions, sanitize_path
+
+# Define common libraries to suggest for suppression
+COMMON_LIBS = ["node_modules", "dist", ".venv", ".git", "__pycache__"]
+
+def _abort_if_none(val):
+    """Raise a cancellation error if the user hits Esc/Ctrl+C."""
+    if val is None:
+        raise q.errors.QuestionaryError("User cancelled.")
+    return val
+
+def run_guide(
+    default_root: Path,
+    default_depth: int,
+    default_format: str,
+    default_output: Optional[Path],
+) -> None:
+    """Run a rock-solid interactive wizard to generate a tree."""
+    try:
+        # Step 1: Get root directory
+        path_str = _abort_if_none(q.path("📁 1. Directory to scan:", default=str(default_root)).ask())
+        root_path = sanitize_path(path_str)
+
+        # Step 2: Get depth, with validation loop
+        while True:
+            depth_str = _abort_if_none(q.text("📏 2. Max recursion depth:", default=str(default_depth)).ask())
+            try:
+                depth = int(depth_str)
+                if depth > 0:
+                    break
+                q.print("Please enter a positive number.", style="bold yellow")
+            except (ValueError, AssertionError):
+                q.print("Please enter a valid integer.", style="bold yellow")
+
+        # Step 3: Filter by language (optional)
+        languages: List[str] = []
+        if _abort_if_none(q.confirm("🔍 3. Filter by specific file types?", default=False).ask()):
+            all_exts = discover_extensions(root_path, suppress=COMMON_LIBS)
+            if all_exts:
+                languages = _abort_if_none(q.checkbox("   Select extensions:", choices=sorted(all_exts)).ask())
+
+        # Step 4: Get output format
+        fmt = _abort_if_none(q.select("🎨 4. Output format:", choices=["text", "md", "json", "html"], default=default_format).ask())
+
+        # Step 5: Get output file (optional, now correctly sanitized)
+        output_str = _abort_if_none(q.text("💾 5. Save to file? (leave blank for console)", default=str(default_output or "")).ask())
+        output_path = sanitize_path(output_str) if output_str.strip() else None
+
+        # --- Generation ---
+        q.print("\n⏳ Generating your tree...", style="bold")
+        generate_output(
+            root=root_path,
+            depth=depth,
+            fmt=fmt,
+            output_path=output_path,
+            languages=tuple(languages),
+        )
+        if not output_path:
+            q.print("\n✨ Done!", style="bold green")
+
+    except (q.errors.QuestionaryError, KeyboardInterrupt):
+        q.print("\nOperation cancelled.", style="bold red")
+        sys.exit(0)
+    except Exception as e:
+        q.print(f"\nAn unexpected error occurred: {e}", style="bold red")
+        sys.exit(1)
+
+def run_menu(*args, **kwargs) -> None:
+    """Placeholder for the interactive menu."""
+    q.print("Interactive menu mode (--menu) is not yet implemented.", style="bold yellow")
+

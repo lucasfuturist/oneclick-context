@@ -1,0 +1,88 @@
+﻿# tests/test_prompts.py
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
+
+from oneclick_context.prompts import run_guide
+
+
+# ── helpers ─────────────────────────────────────────────────────────────
+class Stub:
+    """Minimal object mimicking a Questionary prompt: .ask() -> value."""
+
+    def __init__(self, value):
+        self._value = value
+
+    def ask(self):
+        # In a real scenario, you might add logic to handle cancellation
+        if self._value is None:
+            raise InterruptedError("User cancelled.")
+        return self._value
+
+
+def make_stub_sequence(answers):
+    """Return a function that pops answers in FIFO order each call."""
+    queue = list(answers)
+
+    def _factory(*_args, **_kwargs):
+        return Stub(queue.pop(0))
+
+    return _factory
+
+
+# ── tests ───────────────────────────────────────────────────────────────
+def test_run_guide_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """
+    End-to-end test of the interactive guide using Questionary stubs.
+    """
+    # 1.  Sequence of answers in the SAME ORDER the wizard will ask them
+    # path.ask()            -> tmp_path
+    # text.ask() (depth)    -> "2"
+    # confirm.ask()         -> True
+    # checkbox.ask()        -> [".py", ".md"]
+    # select.ask()          -> "md"
+    # text.ask() (output)   -> tmp_path / "output.md"
+    answers = [
+        str(tmp_path),
+        "2",
+        True,
+        [".py", ".md"],
+        "md",
+        str(tmp_path / "output.md"),
+    ]
+
+    # 2.  Patch each Questionary factory to return a Stub with those answers
+    stub_factory = make_stub_sequence(answers)
+    monkeypatch.setattr("questionary.path", stub_factory)
+    monkeypatch.setattr("questionary.text", stub_factory)
+    monkeypatch.setattr("questionary.confirm", stub_factory)
+    monkeypatch.setattr("questionary.checkbox", stub_factory)
+    monkeypatch.setattr("questionary.select", stub_factory)
+
+    # 3.  Patch discover_extensions → predictable list
+    monkeypatch.setattr(
+        "oneclick_context.prompts.discover_extensions",
+        lambda *_: [".py", ".md", ".js"],
+    )
+
+    # 4.  Patch generate_output so we don’t touch the file-system
+    mock_generate = MagicMock()
+    monkeypatch.setattr("oneclick_context.prompts.generate_output", mock_generate)
+
+    # 5.  Run the wizard
+    run_guide(
+        default_root=tmp_path,
+        default_depth=3,
+        default_format="text",
+        default_output=None,
+    )
+
+    # 6.  Verify generate_output called once with expected kwargs
+    mock_generate.assert_called_once()
+    kwargs = mock_generate.call_args.kwargs
+    assert kwargs["root"] == tmp_path
+    assert kwargs["depth"] == 2
+    assert kwargs["fmt"] == "md"
+    assert kwargs["output_path"] == tmp_path / "output.md"
+    assert kwargs["languages"] == (".py", ".md")

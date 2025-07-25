@@ -1,36 +1,40 @@
-﻿from __future__ import annotations
+﻿# Standard library imports
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+
+# Third-party imports
 import typer
+
+# First-party imports
 from .commands.generate import generate_output
+from .prompts import run_guide, run_menu
 
 app = typer.Typer(add_completion=False, help="Generate compact file trees")
 
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    path: str = typer.Option(
-        ".", "--path", "-p", help="Root folder to scan"
-    ),
+    path: str = typer.Option(".", "--path", "-p", help="The root folder to scan."),
     depth: int = typer.Option(3, "--depth", "-d", show_default=True),
-    languages: list[str] = typer.Option(
-        (), "--lang", "-l", help="extra file extensions (.tsx .ps1 …)"
+    languages: List[str] = typer.Option(
+        (), "--lang", "-l", help="Filter tree to only include these extensions."
+    ),
+    inline: List[str] = typer.Option(
+        (), "--inline", "-i", help="Extensions of scripts to print in full, e.g., .py"
     ),
     fmt: str = typer.Option(
         "text", "--format", "--fmt", "-f",
         case_sensitive=False, help="output format"
     ),
     output: Optional[Path] = typer.Option(
-        None, "--output", "-o", dir_okay=False,
-        help="write result to FILE instead of stdout",
+        None, "--output", "-o", help="write result to FILE instead of stdout",
+        dir_okay=False,
     ),
     guide: bool = typer.Option(False, "--guide", "-g", help="step-by-step wizard"),
     menu: bool = typer.Option(False, "--menu", "-m", help="interactive menu"),
 ) -> None:
     """Entry point that delegates to command modules."""
-
     if guide or menu:
-        from .prompts import run_guide, run_menu
         (run_guide if guide else run_menu)(
             default_root=Path(path),
             default_depth=depth,
@@ -46,7 +50,5 @@ def main(
             fmt=fmt,
             output_path=output,
             languages=tuple(languages),
+            inline_exts=tuple(inline)
         )
-
-if __name__ == "__main__":
-    app()
